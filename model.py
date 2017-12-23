@@ -17,11 +17,11 @@ def image_caption_model(vocab_size=2187, embedding_matrix=None, lang_dim=100,
         x = Embedding(output_dim=lang_dim, input_dim=vocab_size, init='glorot_uniform', input_length=1)(lang_input)
 
     lang_embed = Reshape((lang_dim,))(x)
-    lang_embed = merge([lang_embed, seq_input], mode='concat', concat_axis=-1)
+    lang_embed = concatenate([lang_embed, seq_input],axis=-1)
     lang_embed = Dense(lang_dim)(lang_embed)
     lang_embed = Dropout(0.25)(lang_embed)
 
-    merge_layer = merge([img_input, lang_embed, vhist_input], mode='concat', concat_axis=-1)
+    merge_layer = concatenate([img_input, lang_embed, vhist_input], axis=-1)
     merge_layer = Reshape((1, lang_dim+img_dim+vocab_size))(merge_layer)
 
     gru_1 = GRU(img_dim)(merge_layer)
@@ -30,8 +30,8 @@ def image_caption_model(vocab_size=2187, embedding_matrix=None, lang_dim=100,
     gru_1 = BatchNormalization()(gru_1)
     gru_1 = Activation('softmax')(gru_1)
 
-    attention_1 = merge([img_input, gru_1], mode='mul', concat_axis=-1)
-    attention_1 = merge([attention_1, lang_embed, vhist_input], mode='concat', concat_axis=-1)
+    attention_1 = multiply([img_input, gru_1])
+    attention_1 = concatenate([attention_1, lang_embed, vhist_input], axis=-1)
     attention_1 = Reshape((1, lang_dim + img_dim + vocab_size))(attention_1)
     gru_2 = GRU(1024)(attention_1)
     gru_2 = Dropout(0.25)(gru_2)
